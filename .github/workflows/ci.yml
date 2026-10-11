@@ -32,7 +32,7 @@ jobs:
           go-version: stable
       - run: brew install pkgconf
       - run: scripts/build-release.sh
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: dualhd-mac-macos-universal
           path: dist/*.tar.gz
