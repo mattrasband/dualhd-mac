@@ -64,7 +64,7 @@ The binaries aren't signed by Apple. Downloading with `curl` as above avoids
 Gatekeeper's quarantine; if you downloaded the archive in a browser instead,
 run `xattr -dr com.apple.quarantine .` in the unpacked folder.
 
-To build from source instead, you need [Go](https://go.dev/dl/) 1.22 or later
+To build from source instead, you need [Go](https://go.dev/dl/) 1.25 or later
 and `brew install libusb pkgconf`:
 
 ```sh
@@ -106,6 +106,7 @@ Logs: `~/Library/Logs/dualhd-mac.log`
 | `bin/tune`     | Tune one or two RF channels, print signal stats, record to `.ts` |
 | `bin/hdhr`     | HDHomeRun-compatible server (what the launchd agent runs)        |
 | `bin/usbdesc`  | Print the device's USB interfaces and endpoints                  |
+| `bin/plexdvr-mcp` | MCP server for scheduling Plex recordings from AI agents      |
 
 ```sh
 ./bin/tune -rf 35 -d 0           # tune RF 35, show RSSI/SNR/lock, no capture
@@ -114,6 +115,40 @@ Logs: `~/Library/Logs/dualhd-mac.log`
 
 `tune` takes physical **RF** channel numbers; `scan` shows which virtual
 channels (e.g. 4.1) each RF channel carries.
+
+## Scheduling recordings from AI agents
+
+`bin/plexdvr-mcp` is an [MCP](https://modelcontextprotocol.io) server that
+lets an AI agent search the Plex guide and schedule, list and cancel DVR
+recordings ("record the Broncos game Sunday", "record every new episode of
+Jeopardy"). It works with any Plex DVR, not just this tuner.
+
+| Tool               | What it does                                                    |
+|--------------------|-----------------------------------------------------------------|
+| `search_guide`     | Find shows, episodes, sports events and movies by title         |
+| `whats_on`         | List what airs in a time window, optionally on one channel      |
+| `record`           | Record one airing, or a whole series; optional channel, airing time and padding |
+| `list_recordings`  | Scheduled recordings and the airings they'll capture            |
+| `cancel_recording` | Cancel a recording (already-recorded shows are kept)            |
+
+Recordings go to the libraries chosen in Plex's DVR settings. The server runs
+on the same Mac as Plex and reads the Plex token from Plex Media Server's
+preferences, so the token isn't stored in the agent's configuration. Set
+`PLEX_URL` and `PLEX_TOKEN` to use a different server.
+
+Add it to your agent as a stdio MCP server, using the full path to the
+binary. For example:
+
+```sh
+# Hermes Agent
+hermes mcp add plexdvr --command "$PWD/bin/plexdvr-mcp"
+
+# Claude Code
+claude mcp add plexdvr -- "$PWD/bin/plexdvr-mcp"
+```
+
+Plex's recording API isn't publicly documented; this uses the same calls as
+Plex's own apps, which a Plex update could change.
 
 ## How it works
 
@@ -164,7 +199,8 @@ release. The script also works locally and writes to `dist/`.
 GPL-2.0-or-later; see [LICENSE](LICENSE). The driver code is derived from the
 Linux kernel drivers listed above, and keeps their authors' copyright notices.
 Builds that include the Apache-2.0 [gousb](https://github.com/google/gousb)
-library are distributed under GPL version 3.
+and [MCP Go SDK](https://github.com/modelcontextprotocol/go-sdk) libraries are
+distributed under GPL version 3.
 
 ## Trademarks
 

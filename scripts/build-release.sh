@@ -13,7 +13,7 @@ set -eu
 LIBUSB_VERSION=1.0.30
 LIBUSB_SHA256=fea36f34f9156400209595e300840767ab1a385ede1dc7ee893015aea9c6dbaf
 MIN_MACOS=13.0
-COMMANDS="hdhr scan tune probe usbdesc"
+COMMANDS="hdhr scan tune probe usbdesc plexdvr-mcp"
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 VERSION=${1:-$(git -C "$ROOT" describe --tags --always --dirty)}
