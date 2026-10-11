@@ -67,6 +67,8 @@ pkg="$BUILD/$NAME"
 mkdir -p "$pkg/bin" "$pkg/deploy"
 for cmd in $COMMANDS; do
 	lipo -create -output "$pkg/bin/$cmd" "$BUILD/bin-arm64/$cmd" "$BUILD/bin-x86_64/$cmd"
+	# The linker only ad-hoc signs the arm64 slice; sign both alike.
+	codesign --force --sign - "$pkg/bin/$cmd"
 	if otool -L "$pkg/bin/$cmd" | grep -q libusb; then
 		echo "$cmd links libusb dynamically" >&2
 		exit 1
