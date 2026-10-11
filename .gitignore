@@ -1,0 +1,4 @@
+bin/
+*.ts
+device_id
+lineup.json
