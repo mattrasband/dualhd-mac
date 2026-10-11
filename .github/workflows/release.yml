@@ -26,6 +26,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          flags=
+          if [[ "$GITHUB_REF_NAME" == *-* ]]; then flags=--prerelease; fi
           gh release create "$GITHUB_REF_NAME" dist/* \
-            --title "$GITHUB_REF_NAME" --generate-notes \
-            $(case "$GITHUB_REF_NAME" in *-*) echo --prerelease ;; esac)
+            --title "$GITHUB_REF_NAME" --generate-notes $flags
