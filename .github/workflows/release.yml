@@ -1,0 +1,31 @@
+name: Release
+
+# Push a tag like v0.1.0 to build the package and publish a GitHub release.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: stable
+      - name: Test
+        run: |
+          brew install libusb pkgconf
+          go test ./...
+      - name: Build package
+        run: scripts/build-release.sh "$GITHUB_REF_NAME"
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --title "$GITHUB_REF_NAME" --generate-notes \
+            $(case "$GITHUB_REF_NAME" in *-*) echo --prerelease ;; esac)

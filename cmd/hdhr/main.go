@@ -24,13 +24,22 @@ import (
 	"github.com/mattrasband/dualhd-mac/tuner"
 )
 
+// version is set at build time by scripts/build-release.sh.
+var version = "dev"
+
 func main() {
+	showVersion := flag.Bool("version", false, "print the version and exit")
 	addr := flag.String("addr", ":5004", "HTTP listen address")
 	lineupPath := flag.String("lineup", "lineup.json", "scan results from cmd/scan")
 	idPath := flag.String("device-id-file", "device_id", "where the HDHomeRun device ID is remembered")
 	name := flag.String("name", "WinTV-dualHD (Mac)", "friendly name")
 	discovery := flag.Bool("discovery", true, "answer HDHomeRun UDP discovery on port 65001")
 	flag.Parse()
+	if *showVersion {
+		fmt.Println(version)
+		return
+	}
+	log.Printf("dualhd-mac %s", version)
 
 	lineup, err := hdhr.LoadLineup(*lineupPath)
 	if err != nil {

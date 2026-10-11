@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: stable
+      - name: Install libusb
+        run: brew install libusb pkgconf
+      - run: go vet ./...
+      - run: go test ./...
+
+  package:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v6
+        with:
+          go-version: stable
+      - run: brew install pkgconf
+      - run: scripts/build-release.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dualhd-mac-macos-universal
+          path: dist/*.tar.gz

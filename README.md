@@ -43,18 +43,39 @@ Look for `USB Product ID: 0x826d`. (The device names itself `955D`.)
 
 ## Requirements
 
-- macOS on Apple silicon or Intel
-- [Go](https://go.dev/dl/) 1.22 or later
-- libusb: `brew install libusb pkg-config`
+- macOS 13 or later, on Apple silicon or Intel
 - Plex Media Server with an active **Plex Pass** (required by Plex for Live TV & DVR)
 
-## Quick start
+## Install
+
+Download the latest release (a universal binary for Apple silicon and Intel,
+with libusb built in). This unpacks into a `dualhd-mac` folder in the
+current directory:
+
+```sh
+curl -fsSL https://github.com/mattrasband/dualhd-mac/releases/latest/download/dualhd-mac-macos-universal.tar.gz | tar xz
+cd dualhd-mac
+```
+
+To upgrade, run the same command from the same place (your `lineup.json`
+and settings are kept), then `deploy/install.sh` again.
+
+The binaries aren't signed by Apple. Downloading with `curl` as above avoids
+Gatekeeper's quarantine; if you downloaded the archive in a browser instead,
+run `xattr -dr com.apple.quarantine .` in the unpacked folder.
+
+To build from source instead, you need [Go](https://go.dev/dl/) 1.22 or later
+and `brew install libusb pkgconf`:
 
 ```sh
 git clone https://github.com/mattrasband/dualhd-mac
 cd dualhd-mac
 go build -o bin/ ./cmd/...
+```
 
+## Quick start
+
+```sh
 ./bin/probe            # check the tuner is detected and the chips respond
 ./bin/scan             # scan RF channels 2-36, writes lineup.json (~10s)
 deploy/install.sh      # install and start the server as a login service
@@ -122,6 +143,12 @@ disassembled or used, and no proprietary firmware is included.
 go test ./...                                      # no hardware needed
 HAUPPAUGE_HW=1 go test -v -run Reconnect ./tuner   # needs the tuner; stop the service first
 ```
+
+## Releases
+
+Pushing a tag such as `v0.1.0` runs `.github/workflows/release.yml`, which
+builds the package with `scripts/build-release.sh` and publishes a GitHub
+release. The script also works locally and writes to `dist/`.
 
 ## Limitations
 

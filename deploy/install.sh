@@ -1,5 +1,5 @@
 #!/bin/sh
-# Builds dualhd-mac and installs it as a launchd agent that starts at login.
+# Builds dualhd-mac (from a source checkout) and installs it as a launchd agent that starts at login.
 #
 #   deploy/install.sh            build, install and (re)start the service
 #   deploy/install.sh uninstall  stop and remove the service
@@ -30,7 +30,12 @@ if [ ! -f "$ROOT/lineup.json" ]; then
 fi
 
 cd "$ROOT"
-go build -o bin/hdhr ./cmd/hdhr
+if [ -f go.mod ]; then
+	go build -o bin/hdhr ./cmd/hdhr
+elif [ ! -x bin/hdhr ]; then
+	echo "bin/hdhr not found" >&2
+	exit 1
+fi
 
 mkdir -p "$(dirname "$PLIST")"
 cat > "$PLIST" <<PLIST
