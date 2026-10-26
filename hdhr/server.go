@@ -194,7 +194,15 @@ func (s *Server) stream(w http.ResponseWriter, r *http.Request) {
 	f := tsfilter.New(ch.Program)
 	var carry, out []byte
 	var sent int64
+	// Damage is logged at most every 10s, so a glitch a player reports
+	// can be matched to what the antenna delivered.
+	var health tsfilter.Health
+	lastHealth := time.Now().Add(-10 * time.Second)
 	defer func() {
+		if health.Any() {
+			log.Printf("%s: damaged signal: %d uncorrectable packets, %d continuity gaps, %d resyncs",
+				ch.Number, health.Damaged, health.Gaps, health.Resyncs)
+		}
 		log.Printf("stopped %s for %s after %v (%.1f MB, %d chunks dropped)",
 			ch.Number, r.RemoteAddr, time.Since(start).Round(time.Second), float64(sent)/1e6, sub.Dropped)
 	}()
@@ -211,16 +219,31 @@ func (s *Server) stream(w http.ResponseWriter, r *http.Request) {
 		}
 		data := append(carry, chunk...)
 		out = out[:0]
-		i := 0
+		i, synced := 0, true
 		for len(data)-i >= 188 {
 			if data[i] != 0x47 {
+				if synced {
+					health.Resyncs++
+				}
+				synced = false
 				i++
 				continue
 			}
+			synced = true
+			n := len(out)
 			out = f.Filter(data[i:i+188], out)
+			if len(out) > n {
+				health.Check(out[n:])
+			}
 			i += 188
 		}
 		carry = append(carry[:0], data[i:]...)
+		if health.Any() && time.Since(lastHealth) >= 10*time.Second {
+			log.Printf("%s: damaged signal: %d uncorrectable packets, %d continuity gaps, %d resyncs",
+				ch.Number, health.Damaged, health.Gaps, health.Resyncs)
+			health.Reset()
+			lastHealth = time.Now()
+		}
 		if len(out) == 0 {
 			continue
 		}

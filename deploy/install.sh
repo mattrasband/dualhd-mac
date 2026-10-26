@@ -69,6 +69,12 @@ PLIST
 plutil -lint "$PLIST" >/dev/null
 
 stop
-launchctl bootstrap "$DOMAIN" "$PLIST"
+# bootout returns before the old instance is gone; bootstrap then fails
+# with "Input/output error" for a moment.
+for i in 1 2 3 4 5; do
+	launchctl bootstrap "$DOMAIN" "$PLIST" 2>/dev/null && break
+	[ "$i" = 5 ] && launchctl bootstrap "$DOMAIN" "$PLIST" # show the error
+	sleep 1
+done
 echo "installed $LABEL; logs: $LOG"
 echo "add it to Plex at 127.0.0.1:5004 (Settings > Live TV & DVR)"

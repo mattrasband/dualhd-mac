@@ -16,9 +16,15 @@ func TestCapture(t *testing.T) {
 	}
 	f := New(1)
 	var out []byte
+	var h Health
 	for i := 0; i+188 <= len(in); i += 188 {
+		n := len(out)
 		out = f.Filter(in[i:i+188], out)
+		if len(out) > n {
+			h.Check(out[n:])
+		}
 	}
+	t.Logf("damaged=%d gaps=%d", h.Damaged, h.Gaps)
 	if len(out) == 0 || len(out)%188 != 0 {
 		t.Fatalf("bad output length %d", len(out))
 	}
